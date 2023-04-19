@@ -1,0 +1,72 @@
+name: First Release 🌱
+
+on:
+  workflow_dispatch:
+
+
+jobs:
+  env:
+    uses: katakam/.github/.github/workflows/env.yaml@main
+
+  test:
+    uses: katakam/.github/.github/workflows/test.yaml@main
+
+  quality-gate:
+    uses: katakam/.github/.github/workflows/sonarqube.yaml@main
+    secrets: inherit
+
+  docs:
+    uses: katakam/.github/.github/workflows/techdocs.yaml@main
+    secrets: inherit
+    with:
+      repository: 
+    needs:
+      - env
+
+  build-and-push:
+    uses: katakam/.github/.github/workflows/build-and-push.yaml@main
+    with:
+      tag: 
+    needs:
+      - env
+      - test
+      - quality-gate
+
+  security-gateway:
+    uses: katakam/.github/.github/workflows/trivy.yaml@main
+    with:
+      tag: 
+    needs:
+      - env
+      - build-and-push
+
+  deploy:
+    uses: katakam/.github/.github/workflows/deploy.yaml@main
+    secrets: inherit
+    with:
+      tag: 
+      repository: 
+      url: https://.katakam.io
+      environment: development
+    needs:
+      - env
+      - security-gateway
+
+  promote:
+    uses: katakam/.github/.github/workflows/promote.yaml@main
+    secrets: inherit
+    with:
+      tag: 
+      repository: 
+      url: https://.katakam.io
+      environment: production
+    needs:
+      - env
+      - deploy
+
+  notify:
+    uses: katakam/.github/.github/workflows/notify.yaml@main
+    if: always()
+    secrets: inherit
+    needs:
+      - promote

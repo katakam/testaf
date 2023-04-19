@@ -1,0 +1,62 @@
+name: HotFix 🔥
+
+on:
+  push:
+    branches:
+      - 'hotfix/**'
+    paths-ignore:
+      - README.md
+      - catalog-info.yaml
+      - 'docs/**'
+
+jobs:
+  env:
+    uses: katakam/.github/.github/workflows/env.yaml@main
+
+  test:
+    uses: katakam/.github/.github/workflows/test.yaml@main
+
+  quality-gate:
+    uses: katakam/.github/.github/workflows/sonarqube.yaml@main
+    secrets: inherit
+
+  code-scan:
+    uses: katakam/.github/.github/workflows/synk-golang.yaml@main
+    secrets: inherit
+
+  build-and-push:
+    uses: katakam/.github/.github/workflows/build-and-push.yaml@main
+    with:
+      tag: 
+    needs:
+      - env
+      - test
+      - quality-gate
+      - code-scan
+
+  security-gateway:
+    uses: katakam/.github/.github/workflows/trivy.yaml@main
+    with:
+      tag: 
+    needs:
+      - env
+      - build-and-push
+
+  deploy:
+    uses: katakam/.github/.github/workflows/deploy.yaml@main
+    secrets: inherit
+    with:
+      tag: 
+      repository: 
+      url: https://.katakam.io
+      environment: development
+    needs:
+      - env
+      - security-gateway
+
+  notify:
+    uses: katakam/.github/.github/workflows/notify.yaml@main
+    if: always()
+    secrets: inherit
+    needs:
+      - deploy

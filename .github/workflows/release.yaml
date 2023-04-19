@@ -1,0 +1,51 @@
+name: Release 📦
+
+on:
+  push:
+    branches:
+      - 'release/**'
+    paths-ignore:
+      - README.md
+      - catalog-info.yaml
+      - 'docs/**'
+
+env:
+  ENVIRONMENT: development
+
+jobs:
+  env:
+    uses: katakam/.github/.github/workflows/env.yaml@main
+
+  build-and-push:
+    uses: katakam/.github/.github/workflows/build-and-push.yaml@main
+    with:
+      tag: 
+    needs:
+      - env
+
+  security-gateway:
+    uses: katakam/.github/.github/workflows/trivy.yaml@main
+    with:
+      tag: 
+    needs:
+      - env
+      - build-and-push
+
+  deploy:
+    uses: katakam/.github/.github/workflows/deploy.yaml@main
+    secrets: inherit
+    with:
+      tag: 
+      repository: 
+      url: https://.katakam.io
+      environment: development
+    needs:
+      - env
+      - security-gateway
+
+  notify:
+    uses: katakam/.github/.github/workflows/notify.yaml@main
+    if: always()
+    secrets: inherit
+    needs:
+      - deploy

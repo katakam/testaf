@@ -1,0 +1,33 @@
+name: Main 🚀
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - README.md
+      - 'mkdocs.yml'
+      - catalog-info.yaml
+      - 'docs/**'
+
+jobs:
+  env:
+    uses: katakam/.github/.github/workflows/env.yaml@main
+
+  promote:
+    uses: katakam/.github/.github/workflows/promote.yaml@main
+    secrets: inherit
+    with:
+      tag: 
+      repository: 
+      url: https://.katakam.io
+      environment: production
+    needs:
+      - env
+
+  notify:
+    uses: katakam/.github/.github/workflows/notify.yaml@main
+    if: always()
+    secrets: inherit
+    needs:
+      - promote

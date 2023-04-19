@@ -1,0 +1,43 @@
+name: Feature ✨
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+    paths-ignore:
+      - README.md
+      - catalog-info.yaml
+      - 'docs/**'
+
+
+jobs:
+  env:
+    uses: katakam/.github/.github/workflows/env.yaml@main
+
+  test:
+    uses: katakam/.github/.github/workflows/test.yaml@main
+    needs:
+      - env
+
+  quality-gate:
+    uses: katakam/.github/.github/workflows/sonarqube.yaml@main
+    secrets: inherit
+    needs:
+      - env
+
+  code-scan:
+    uses: katakam/.github/.github/workflows/synk-golang.yaml@main
+    secrets: inherit
+    needs:
+      - env
+
+  notify:
+    uses: katakam/.github/.github/workflows/notify.yaml@main
+    if: always()
+    secrets: inherit
+    needs:
+      - env
+      - test
+      - quality-gate
+      - code-scan
+      # - action-pull-request
